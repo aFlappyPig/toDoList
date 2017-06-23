@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>toDoList</title>
+	<link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.css">
+	<link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap-theme.min.css">
+	<style>
+		.red {
+			color: red;
+			margin-left: 10px;
+			cursor: pointer;
+		}
+	</style>
+</head>
+<body ng-app="myApp">
+<div class="container" ng-controller="mainCtrl">
+	<h2>TO DO LIST</h2>
+	<form class="form-inline">
+		<div class="form-group">
+			<input type="text" class="form-control" autocomplete="off" ng-model="task" placeholder="添加任务">
+			<button class="btn btn-success" ng-click="add()">添加</button>
+		</div>
+	</form>
+	<ul class="list-unstyled list-group" ng-cloak>
+		<li class="list-group-item" ng-repeat="item in list track by $index">
+			<span ng-bind="item"></span><i class="glyphicon glyphicon-remove red" ng-click="remove($index)"></i>
+		</li>
+	</ul>
+</div>
+
+
+<script src="node_modules/jquery/dist/jquery.min.js"></script>
+<script src="node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+<script src="node_modules/angular/angular.min.js"></script>
+<!--引入工具函数-->
+<script src="utils/ArrayUtils.js"></script>
+<!--<script src="utils/DateUtils.js"></script>-->
+<!--引入工具函数-->
+<script>
+    angular.module('myApp', []).controller('mainCtrl', function ($scope, $http) {
+        //任务列表默认为空
+        $scope.list = [];
+        //请求任务数据
+        find();
+
+        /**
+         *  添加任务
+         */
+        $scope.add = function () {
+            if (!$scope.task) return;
+            var list = angular.copy($scope.list);
+            list.push($scope.task);
+
+            save(list).then(function (res) {
+                $scope.task = undefined;
+                find();
+            }, function (err) {
+                alert('添加任务失败，请重试！');
+            });
+        };
+
+        /**
+         *  移除任务
+         * @param index 任务序号，考虑到任务名称可能重复，所以传序号
+         */
+        $scope.remove = function (index) {
+            var list = angular.copy($scope.list);
+            list.splice(index, 1);
+            save(list).then(function (res) {
+                find();
+            }, function (err) {
+
+            });
+        };
+
+        /**
+         *  保存任务列表到数据库
+         * @param data  Array，任务列表
+         * @returns {*|Promise.<TResult>} 返回Promise
+         */
+        function save (data) {
+            return $http.post('/save', {data: data}).then(function (res) {
+
+            }, function (err) {
+                console.log(err);
+            });
+        }
+
+        /**
+         *  查询任务列表
+         * @returns {*|Promise.<TResult>} 返回Promise
+         */
+        function find () {
+            return $http.get('/find').then(function (res) {
+                $scope.list = res.data;
+            }, function (err) {
+                console.log(err)
+            });
+        }
+    });
+</script>
+</body>
+</html>
